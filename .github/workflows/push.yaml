@@ -1,0 +1,61 @@
+name: create canary images
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release-images:
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image-type: client
+          - image-type: server
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-${{ matrix.image-type }}
+          tags: |
+            type=raw,value=canary
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          target: ${{ matrix.image-type }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          
+  post-dependencies:
+    needs: release-images
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Create sbom
+        uses: anchore/sbom-action@v0
+        with:
+          format: 'cyclonedx'
+          artifact-name: sbom.json
+          output-file: /tmp/sbom.json
+
+      - name: Post dependencies to Dependency
+        uses: DependencyTrack/gh-upload-sbom@v3
+        with:
+          serverHostname: '${{ secrets.DEPENDENCYTRACK_SERVER_HOSTNAME }}' 
+          apiKey: '${{ secrets.DEPENDENCYTRACK_API_KEY }}'
+          project: '${{ secrets.DEPENDENCYTRACK_PROJECT }}'
+          bomFilename: "/tmp/sbom.json"
+          protocol: 'https'

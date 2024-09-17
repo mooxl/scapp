@@ -1,0 +1,110 @@
+name: check, test and create preview images
+
+on:
+  pull_request:
+    branches: [main]
+env:
+  SERVER_DB_URL: postgres://user:password@postgres:5432/scapp
+  HOME: /root
+
+jobs:
+  check-and-test:
+    permissions:
+      contents: read
+      pull-requests: write
+    container:
+      image: mcr.microsoft.com/playwright:v1.46.1-jammy
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: scapp
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache .pnpm-store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - name: Install Dependencies
+        run: pnpm install
+      - name: Format, Lint and Typecheck
+        run: pnpm check:ci
+      - name: Run Migrations
+        run: pnpm drizzle:migrate
+      - name: Run Seeds
+        run: pnpm seed:app
+      - name: Run Unit tests
+        run: pnpm test:unit
+      - name: Run Playwright tests
+        run: pnpm test:e2e --token=${{ secrets.TURBO_TOKEN }} --api=${{ secrets.TURBO_API }} --team=${{ secrets.TURBO_TEAM }}
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  release-images:
+    needs: check-and-test
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image-type: client
+          - image-type: server
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get short sha of commits
+        id: short_sha
+        run: |
+          AFTER_SHA=$(echo "${{ github.event.pull_request.head.sha }}" | cut -c1-7)
+          echo "AFTER_SHA=${AFTER_SHA}" >> $GITHUB_ENV
+      - name: Delete image
+        uses: bots-house/ghcr-delete-image-action@v1.1.0
+        continue-on-error: true
+        with:
+          owner: shiftdigital-de
+          name: shiftdesk-${{ matrix.image-type }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: preview-${{ github.event.pull_request.number }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}-${{ matrix.image-type }}
+          tags: |
+            type=ref,enable=true,priority=100,prefix=preview-,suffix=,event=pr
+            type=raw,enable=true,priority=200,prefix=preview-,suffix=,value=${{ env.AFTER_SHA }}
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          target: ${{ matrix.image-type }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

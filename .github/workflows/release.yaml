@@ -1,0 +1,55 @@
+name: delete canary images and create release images
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release-images:
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image-type: client
+          - image-type: server
+    steps:
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Delete image
+      uses: vlaurin/action-ghcr-prune@v0.6.0
+      continue-on-error: true
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        organization: shiftdigital-de
+        container: shiftdesk-${{ matrix.image-type }}
+        dry-run: false
+        prune-untagged: true
+        prune-tags-regexes: |
+          .*
+        keep-tags-regexes: |
+          ^preview-
+          ^latest
+          ^canary
+          \b(?:(?!\d+\.\d+\.\d+-rc\.\d+)\d+\.\d+\.\d+)\b
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}-${{ matrix.image-type }}
+        tags: |
+          type=semver,pattern={{version}}
+          type=raw,value=latest
+    - name: Build and push image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        target: ${{ matrix.image-type }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}

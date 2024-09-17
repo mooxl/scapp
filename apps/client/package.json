@@ -1,0 +1,49 @@
+{
+  "name": "@scapp/client",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "remix vite:dev",
+    "build": "remix vite:build",
+    "preview": "pnpm exec import-meta-env -x .import-meta-env && serve dist/client -s -L --listen 3000",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@conform-to/react": "^1.2.1",
+    "@conform-to/zod": "^1.2.1",
+    "@import-meta-env/unplugin": "^0.6.0",
+    "@remix-run/react": "^2.12.0",
+    "@remixicon/react": "^4.2.0",
+    "@scapp/shared": "workspace:*",
+    "@tanstack/react-query": "^5.56.2",
+    "@tanstack/react-query-devtools": "^5.56.2",
+    "@trpc/client": "11.0.0-rc.477",
+    "@trpc/react-query": "11.0.0-rc.477",
+    "@trpc/server": "11.0.0-rc.477",
+    "clsx": "^2.1.1",
+    "react": "19.0.0-rc-4f604941-20240830",
+    "react-dom": "19.0.0-rc-4f604941-20240830",
+    "remix-params-helper": "^0.5.1",
+    "remix-routes": "^1.7.7",
+    "serve": "^14.2.3",
+    "tailwind-merge": "^2.5.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@import-meta-env/cli": "^0.7.0",
+    "@remix-run/dev": "^2.12.0",
+    "@types/react": "18.3.7",
+    "@types/react-dom": "18.3.0",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.47",
+    "postcss-import": "16.1.0",
+    "tailwindcss": "3.4.12",
+    "typescript": "5.6.2",
+    "vite": "5.4.6",
+    "vite-tsconfig-paths": "^5.0.1"
+  },
+  "overrides": {
+    "react": "next",
+    "react-dom": "next"
+  }
+}

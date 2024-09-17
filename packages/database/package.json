@@ -1,0 +1,33 @@
+{
+  "name": "@scapp/database",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./client": {
+      "import": "./src/client.ts"
+    },
+    "./schema": {
+      "import": "./src/schema/index.ts"
+    }
+  },
+  "scripts": {
+    "drizzle:generate": "drizzle-kit generate",
+    "drizzle:migrate": "tsx src/drizzle_migrate.ts",
+    "drizzle:studio": "drizzle-kit studio",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remixicon/react": "^4.2.0",
+    "@scapp/shared": "workspace:*",
+    "drizzle-orm": "^0.33.0",
+    "drizzle-zod": "^0.5.1",
+    "postgres": "^3.4.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.24.2",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2"
+  }
+}

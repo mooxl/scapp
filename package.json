@@ -1,0 +1,41 @@
+{
+  "name": "shift-desk",
+  "private": true,
+  "scripts": {
+    "dev": "dotenv -- turbo run dev",
+    "dev:reset": "pnpm dev:cleanup && pnpm dev:docker && node -e \"setTimeout(() => process.exit(0), 2000)\" && pnpm dev:setup",
+    "dev:reboot": "pnpm dev:reset && pnpm dev",
+    "dev:cleanup": "docker compose down db keycloak && rimraf ./data/database",
+    "dev:docker": "docker compose up db keycloak -d",
+    "dev:setup": "pnpm drizzle:migrate && pnpm seed:app",
+    "build": "dotenv -- turbo run build --parallel",
+    "start": "turbo run start",
+    "preview": "dotenv -- turbo run preview",
+    "preview:client": "dotenv -- turbo run preview --filter=@scapp/client",
+    "preview:server": "dotenv -- turbo run preview --filter=@scapp/server",
+    "test:e2e": "dotenv -- turbo run --env-mode=loose test:e2e",
+    "test:e2e:ui": "dotenv -- turbo run test:e2e:ui",
+    "test:e2e:codegen": "dotenv -- turbo run test:e2e:codegen",
+    "test:unit": "dotenv -- turbo run test:unit --filter=@scapp/server",
+    "check": "pnpm biome check --diagnostic-level=warn .",
+    "check:fix": "pnpm biome check --diagnostic-level=warn --write --unsafe .",
+    "check:types": "turbo run typecheck",
+    "check:ci": "pnpm biome ci --diagnostic-level=warn . && turbo run typecheck",
+    "drizzle:generate": "dotenv -- turbo run drizzle:generate --filter=@scapp/database",
+    "drizzle:migrate": "dotenv -- turbo run drizzle:migrate --filter=@scapp/database",
+    "seed:app": "dotenv -- turbo run seed:app --filter=@scapp/server",
+    "seed:demo": "dotenv -- turbo run seed:demo --filter=@scapp/server",
+    "drizzle:studio": "dotenv -- turbo run drizzle:studio --filter=@scapp/database",
+    "drizzle:clear": "rimraf ./packages/database/migration && pnpm drizzle:generate"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.9.1",
+    "dotenv-cli": "7.4.2",
+    "rimraf": "^6.0.1",
+    "turbo": "2.1.2"
+  },
+  "packageManager": "pnpm@9.7.1",
+  "engines": {
+    "node": ">= 20"
+  }
+}

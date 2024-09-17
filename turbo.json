@@ -1,0 +1,68 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": ["CLIENT_*", "SERVER_*"],
+  "tasks": {
+    "topo": {
+      "dependsOn": ["^topo"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^topo"]
+    },
+    "typecheck": {
+      "cache": false
+    },
+    "build": {
+      "outputs": ["dist/**"],
+      "dependsOn": ["^topo"]
+    },
+    "preview": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "preview:client": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "preview:server": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "test:e2e": {
+      "dependsOn": ["^topo"]
+    },
+    "test:e2e:ui": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    },
+    "test:e2e:codegen": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    },
+    "test:unit": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    },
+    "drizzle:generate": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    },
+    "drizzle:migrate": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    },
+    "seed:app": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    },
+    "seed:demo": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    },
+    "drizzle:studio": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+name: delete preview images
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  delete-images:
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image-type: client
+          - image-type: server
+    steps:
+      - name: Delete image
+        uses: bots-house/ghcr-delete-image-action@v1.1.0
+        continue-on-error: true
+        with:
+          owner: shiftdigital-de
+          name: shiftdesk-${{ matrix.image-type }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: preview-${{ github.event.pull_request.number }}
